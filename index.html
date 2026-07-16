@@ -311,6 +311,104 @@
       .scroll{ display:none; }
     }
   </style>
+
+<style>
+  /* Seamless full-bleed visuals: removes the visible rectangular image frame */
+  .visual,
+  .visual.food,
+  .visual.fitness,
+  .visual.beauty,
+  .visual.ec,
+  .visual.marketing {
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    transform: none !important;
+    object-fit: cover !important;
+    object-position: center 57% !important;
+    filter: none !important;
+  }
+
+  /* Keep the main title below the header and fully inside the viewport */
+  .title-wrap {
+    top: 82px !important;
+    width: min(1380px, 90vw) !important;
+  }
+
+  .title {
+    font-size: clamp(4.8rem, 9.2vw, 8rem) !important;
+    line-height: .84 !important;
+    letter-spacing: -.065em !important;
+  }
+
+  .title.long {
+    max-width: 1180px;
+    margin-inline: auto;
+    font-size: clamp(2.8rem, 5.3vw, 5rem) !important;
+    line-height: .92 !important;
+    letter-spacing: -.045em !important;
+  }
+
+  .top-meta {
+    top: 138px !important;
+  }
+
+  .subline {
+    margin-top: 10px !important;
+    padding-inline: 4px;
+  }
+
+  @media (max-width: 1080px) {
+    .title-wrap {
+      top: 92px !important;
+      width: 92vw !important;
+    }
+
+    .title {
+      font-size: clamp(4rem, 10vw, 6.4rem) !important;
+    }
+
+    .title.long {
+      font-size: clamp(2.4rem, 6vw, 4rem) !important;
+    }
+
+    .top-meta {
+      top: 150px !important;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .title-wrap {
+      top: 118px !important;
+      width: 92vw !important;
+    }
+
+    .title {
+      font-size: clamp(3.2rem, 16vw, 4.8rem) !important;
+    }
+
+    .title.long {
+      font-size: clamp(1.9rem, 8.5vw, 2.8rem) !important;
+    }
+
+    .top-meta {
+      top: 184px !important;
+    }
+
+    .visual,
+    .visual.food,
+    .visual.fitness,
+    .visual.beauty,
+    .visual.ec,
+    .visual.marketing {
+      object-position: center 60% !important;
+    }
+  }
+</style>
+
 </head>
 <body>
   <div class="app">

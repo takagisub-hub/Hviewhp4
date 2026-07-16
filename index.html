@@ -1,555 +1,523 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Hview Hero</title>
-<meta name="theme-color" content="#F8F0C4" />
-<style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Inter+Tight:wght@600;700;800&display=swap');
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hview - Visual Slider</title>
+  <style>
+    :root{
+      --bg1:#f06d8d;
+      --bg2:#ea5b7f;
+      --bg3:#e34e75;
+      --white:#fffaf8;
+      --line:rgba(255,255,255,.28);
+      --soft:rgba(255,255,255,.12);
+      --shadow:rgba(102,24,48,.16);
+    }
+    *{box-sizing:border-box}
+    html,body{
+      margin:0;
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      font-family: Inter, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(180deg,var(--bg1) 0%, var(--bg2) 52%, var(--bg3) 100%);
+      color:var(--white);
+    }
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      background:
+        radial-gradient(circle at 50% 38%, rgba(255,255,255,.07), transparent 28%),
+        radial-gradient(circle at 30% 70%, rgba(255,255,255,.04), transparent 32%),
+        radial-gradient(circle at 70% 18%, rgba(255,255,255,.03), transparent 25%);
+      pointer-events:none;
+    }
+    .app{
+      position:relative;
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      isolation:isolate;
+    }
+    .header{
+      position:absolute;
+      top:0; left:0; right:0;
+      z-index:20;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:20px;
+      padding:18px 28px;
+    }
+    .brand{
+      font-size:3rem;
+      font-weight:900;
+      letter-spacing:-0.06em;
+      line-height:1;
+    }
+    .nav{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      padding:8px;
+      border-radius:999px;
+      background:rgba(255,255,255,.12);
+      backdrop-filter: blur(10px);
+      border:1px solid rgba(255,255,255,.18);
+      box-shadow:0 10px 30px var(--shadow);
+    }
+    .nav button{
+      appearance:none;
+      border:0;
+      background:transparent;
+      color:var(--white);
+      font-size:.78rem;
+      font-weight:800;
+      letter-spacing:.05em;
+      padding:12px 16px;
+      border-radius:999px;
+      cursor:pointer;
+      transition:.25s ease;
+      white-space:nowrap;
+      opacity:.86;
+    }
+    .nav button:hover{background:rgba(255,255,255,.10); opacity:1}
+    .nav button.active{
+      background:rgba(255,255,255,.98);
+      color:#df4f74;
+      opacity:1;
+      box-shadow:0 10px 18px rgba(255,255,255,.14);
+    }
+    .connect{
+      border:1px solid rgba(255,255,255,.32);
+      border-radius:999px;
+      padding:14px 20px;
+      font-weight:800;
+      letter-spacing:.04em;
+      background:rgba(255,255,255,.08);
+      white-space:nowrap;
+    }
 
-:root {
-  --bg1: #F39AAD;
-  --bg2: #E85D7A;
-  --bg3: #D94E6B;
-  --pink: #f35177;
-  --ink: #352b2f;
-  --ease: cubic-bezier(.22,.82,.2,1);
-}
+    .hero{
+      position:absolute;
+      inset:0;
+      padding-top:90px;
+      overflow:hidden;
+    }
 
-* { box-sizing: border-box; }
-html, body {
-  margin: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  font-family: "DM Sans", sans-serif;
-  background: var(--bg2);
-  color: var(--ink);
-}
+    .curve{
+      position:absolute;
+      border:3px solid var(--line);
+      border-radius:50%;
+      pointer-events:none;
+      opacity:.75;
+    }
+    .curve.a{ width:420px; height:420px; left:-180px; bottom:-220px; }
+    .curve.b{ width:460px; height:460px; right:-210px; bottom:-260px; }
+    .curve.c{ width:320px; height:320px; right:12%; top:-180px; opacity:.45; }
 
-body {
-  background:
-    radial-gradient(circle at 52% 40%, rgba(255,255,255,.22), transparent 30%),
-    linear-gradient(145deg, var(--bg1) 0%, var(--bg2) 55%, var(--bg3) 100%);
-}
+    .top-meta{
+      position:absolute;
+      top:118px;
+      left:32px;
+      right:32px;
+      z-index:8;
+      display:flex;
+      justify-content:space-between;
+      font-size:1rem;
+      font-weight:800;
+      letter-spacing:-0.02em;
+      opacity:.95;
+    }
 
-.app {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
+    .title-wrap{
+      position:absolute;
+      top:6px;
+      left:50%;
+      transform:translateX(-50%);
+      width:min(1440px, 96vw);
+      z-index:5;
+      text-align:center;
+      pointer-events:none;
+    }
+    .title{
+      margin:0;
+      font-size:clamp(5.8rem, 14vw, 10rem);
+      font-weight:900;
+      letter-spacing:-0.08em;
+      line-height:.88;
+      text-transform:uppercase;
+      color:rgba(255,251,249,.97);
+      text-shadow:0 2px 0 rgba(255,255,255,.04);
+    }
+    .title.long{
+      font-size:clamp(3.4rem, 7vw, 6rem);
+      letter-spacing:-0.05em;
+      line-height:.95;
+    }
+    .subline{
+      margin-top:10px;
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      gap:16px;
+      font-size:1rem;
+      font-weight:800;
+      color:rgba(255,251,249,.96);
+    }
+    .subline span:nth-child(1){text-align:left}
+    .subline span:nth-child(2){text-align:center}
+    .subline span:nth-child(3){text-align:right}
 
-.header {
-  position: absolute;
-  z-index: 30;
-  inset: 0 0 auto 0;
-  height: 92px;
-  display: grid;
-  grid-template-columns: 180px 1fr 210px;
-  align-items: center;
-  gap: 20px;
-  padding: 18px 32px;
-}
+    .slides{
+      position:absolute;
+      inset:0;
+    }
+    .slide{
+      position:absolute;
+      inset:0;
+      opacity:0;
+      visibility:hidden;
+      transform:translateX(105%);
+      transition:
+        transform .85s cubic-bezier(.22,.9,.24,1),
+        opacity .35s ease,
+        visibility .35s ease;
+    }
+    .slide.active{
+      opacity:1;
+      visibility:visible;
+      transform:translateX(0);
+      z-index:2;
+    }
+    .slide.exit-left{ opacity:0; visibility:visible; transform:translateX(-105%); z-index:1; }
+    .slide.exit-right{ opacity:0; visibility:visible; transform:translateX(105%); z-index:1; }
+    .slide.enter-left{ opacity:0; visibility:visible; transform:translateX(-105%); z-index:2; }
+    .slide.enter-right{ opacity:0; visibility:visible; transform:translateX(105%); z-index:2; }
 
-.brand {
-  color: var(--pink);
-  text-decoration: none;
-  font-family: "Inter Tight", sans-serif;
-  font-size: 2.2rem;
-  font-weight: 700;
-  letter-spacing: -.055em;
-}
+    .visual{
+      position:absolute;
+      left:50%;
+      top:57%;
+      transform:translate(-50%,-50%);
+      max-width:min(1280px,88vw);
+      max-height:64vh;
+      object-fit:contain;
+      filter:drop-shadow(0 20px 35px rgba(123,29,56,.12));
+      user-select:none;
+      -webkit-user-drag:none;
+    }
+    .visual.food{ max-width:min(1320px,90vw); max-height:64vh; }
+    .visual.fitness{ max-width:min(1180px,86vw); max-height:61vh; }
+    .visual.beauty{ max-width:min(1260px,88vw); max-height:61vh; }
+    .visual.ec{ max-width:min(1260px,88vw); max-height:61vh; }
+    .visual.marketing{ max-width:min(1200px,86vw); max-height:59vh; }
 
-.nav {
-  justify-self: center;
-  display: flex;
-  gap: 3px;
-  padding: 6px;
-  border-radius: 999px;
-  background: rgba(255,255,255,.55);
-  border: 1px solid rgba(255,255,255,.75);
-  backdrop-filter: blur(10px);
-}
+    .pager{
+      position:absolute;
+      left:50%;
+      bottom:18px;
+      transform:translateX(-50%);
+      display:flex;
+      gap:8px;
+      z-index:12;
+    }
+    .pager button{
+      width:42px;
+      height:42px;
+      border:0;
+      border-radius:999px;
+      background:transparent;
+      color:rgba(255,255,255,.95);
+      font-size:.82rem;
+      font-weight:900;
+      cursor:pointer;
+      transition:.25s ease;
+    }
+    .pager button.active{
+      background:rgba(255,255,255,.18);
+      box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);
+    }
 
-.nav button {
-  border: 0;
-  background: transparent;
-  color: #a53e58;
-  border-radius: 999px;
-  padding: 10px 16px;
-  font-size: .72rem;
-  font-weight: 700;
-  letter-spacing: .055em;
-  cursor: pointer;
-}
+    .scroll{
+      position:absolute;
+      right:18px;
+      bottom:120px;
+      writing-mode:vertical-rl;
+      font-size:.95rem;
+      font-weight:900;
+      letter-spacing:.14em;
+      z-index:12;
+      opacity:.95;
+    }
 
-.nav button.active {
-  background: var(--pink);
-  color: white;
-  box-shadow: 0 8px 18px rgba(227,66,104,.2);
-}
+    @media (max-width: 1080px){
+      .header{ padding:16px 18px; }
+      .brand{ font-size:2.4rem; }
+      .nav{ gap:2px; padding:6px; max-width:60vw; overflow:auto; }
+      .nav button{ padding:10px 12px; font-size:.72rem; }
+      .connect{ display:none; }
+      .title{ font-size:clamp(4rem, 14vw, 7rem); }
+      .title.long{ font-size:clamp(2.6rem, 8vw, 4.4rem); }
+      .subline{ font-size:.85rem; }
+      .visual{ max-width:92vw; max-height:58vh; }
+    }
 
-.connect {
-  justify-self: end;
-  color: var(--pink);
-  text-decoration: none;
-  border: 1px solid rgba(243,81,119,.4);
-  background: rgba(255,255,255,.42);
-  border-radius: 999px;
-  padding: 13px 20px;
-  font-size: .72rem;
-  font-weight: 700;
-  letter-spacing: .06em;
-}
-
-.hero {
-  position: absolute;
-  inset: 92px 0 0;
-  overflow: hidden;
-}
-
-.circle {
-  position: absolute;
-  border: 3px solid rgba(255,255,255,.38);
-  border-radius: 50%;
-  pointer-events: none;
-}
-.circle.one {
-  width: 430px; height: 430px;
-  left: -150px; bottom: -220px;
-}
-.circle.two {
-  width: 360px; height: 360px;
-  right: -130px; bottom: -170px;
-}
-
-.meta {
-  position: absolute;
-  z-index: 12;
-  top: 34px;
-  left: 32px;
-  right: 32px;
-  display: flex;
-  justify-content: space-between;
-  color: rgba(255,255,255,.92);
-  font-family: "Inter Tight", sans-serif;
-  font-size: .95rem;
-  font-weight: 700;
-}
-
-.titleWrap {
-  position: absolute;
-  top: 68px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(95vw, 1500px);
-  text-align: center;
-  z-index: 10;
-  pointer-events: none;
-}
-
-.title {
-  margin: 0;
-  color: rgba(255,255,255,.97);
-  font-family: "Inter Tight", sans-serif;
-  font-size: clamp(5rem, 10vw, 9.6rem);
-  font-weight: 800;
-  line-height: .83;
-  letter-spacing: -.08em;
-  text-transform: uppercase;
-  transition: opacity .28s ease, transform .5s var(--ease);
-}
-.title.long {
-  font-size: clamp(3rem, 6vw, 6.2rem);
-  line-height: .9;
-  letter-spacing: -.055em;
-}
-
-.subs {
-  margin-top: 20px;
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  color: rgba(255,255,255,.88);
-  font-family: "Inter Tight", sans-serif;
-  font-size: .95rem;
-  font-weight: 700;
-}
-.subs span:nth-child(1) { text-align: left; }
-.subs span:nth-child(2) { text-align: center; }
-.subs span:nth-child(3) { text-align: right; }
-
-.slides {
-  position: absolute;
-  inset: 0;
-}
-
-.slide {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateX(115%);
-  transition: transform .9s var(--ease), opacity .5s ease;
-  pointer-events: none;
-}
-.slide.active {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(0);
-  z-index: 5;
-}
-.slide.enter-right {
-  opacity: 0;
-  visibility: visible;
-  transform: translateX(115%);
-  z-index: 6;
-}
-.slide.enter-left {
-  opacity: 0;
-  visibility: visible;
-  transform: translateX(-115%);
-  z-index: 6;
-}
-.slide.leave-left {
-  opacity: 0;
-  visibility: visible;
-  transform: translateX(-115%);
-  z-index: 5;
-}
-.slide.leave-right {
-  opacity: 0;
-  visibility: visible;
-  transform: translateX(115%);
-  z-index: 5;
-}
-
-.visual {
-  position: absolute;
-  left: 50%;
-  top: 60%;
-  transform: translate(-50%, -50%);
-  display: block;
-  object-fit: contain;
-  filter: drop-shadow(0 18px 26px rgba(129,108,41,.15));
-  user-select: none;
-  -webkit-user-drag: none;
-}
-.visual.food { width: min(92vw, 1480px); max-height: 63vh; }
-.visual.fitness { width: min(66vw, 990px); max-height: 58vh; }
-.visual.beauty { width: min(67vw, 1020px); max-height: 58vh; }
-.visual.ec { width: min(73vw, 1120px); max-height: 58vh; }
-.visual.marketing { width: min(72vw, 1100px); max-height: 58vh; }
-
-.badge {
-  position: absolute;
-  left: 42px;
-  bottom: 56px;
-  width: 126px;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: #ffd94f;
-  color: #ff6d00;
-  display: grid;
-  place-items: center;
-  text-align: center;
-  padding: 16px;
-  font-family: "Inter Tight", sans-serif;
-  font-size: .86rem;
-  font-weight: 800;
-  line-height: 1.13;
-  transform: rotate(-12deg);
-  box-shadow: 0 12px 28px rgba(179,141,41,.2);
-  z-index: 11;
-  transition: opacity .25s ease, transform .45s var(--ease);
-}
-.badge.hidden {
-  opacity: 0;
-  transform: rotate(-12deg) scale(.75);
-}
-
-.dots {
-  position: absolute;
-  right: 38px;
-  top: 50%;
-  transform: translateY(-18%);
-  display: grid;
-  gap: 12px;
-  z-index: 11;
-}
-.dots span {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  border: 2px solid rgba(255,255,255,.58);
-  box-shadow: 0 8px 18px rgba(129,108,41,.12);
-}
-.dots span:nth-child(1) { background: #ffe05a; }
-.dots span:nth-child(2) { background: #ffd7dd; }
-.dots span:nth-child(3) { background: #ff6874; }
-.dots span:nth-child(4) { background: #cb79ff; }
-.dots span:nth-child(5) { background: #8f6cff; }
-.dots span:nth-child(6) { background: #ff526b; }
-
-.pager {
-  position: absolute;
-  left: 50%;
-  bottom: 24px;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 10px;
-  z-index: 12;
-}
-.pager button {
-  width: 38px;
-  height: 38px;
-  border-radius: 999px;
-  border: 0;
-  background: transparent;
-  color: rgba(255,255,255,.82);
-  font-family: "Inter Tight", sans-serif;
-  font-weight: 700;
-  cursor: pointer;
-}
-.pager button.active {
-  background: var(--pink);
-  color: white;
-  box-shadow: 0 8px 18px rgba(227,66,104,.2);
-}
-
-.scrollHint {
-  position: absolute;
-  right: 22px;
-  bottom: 100px;
-  writing-mode: vertical-rl;
-  color: rgba(255,255,255,.84);
-  font-size: .72rem;
-  font-weight: 700;
-  letter-spacing: .12em;
-  z-index: 12;
-}
-
-@media (max-width: 760px) {
-  .header {
-    height: 72px;
-    grid-template-columns: 1fr auto;
-    padding: 12px 16px;
-  }
-  .nav, .connect { display: none; }
-  .hero { inset: 72px 0 0; }
-  .meta {
-    top: 18px; left: 18px; right: 18px; font-size: .72rem;
-  }
-  .titleWrap { top: 54px; }
-  .title { font-size: clamp(3.8rem, 17vw, 5.2rem); }
-  .title.long { font-size: clamp(2.2rem, 8.8vw, 3.1rem); }
-  .subs { display: none; }
-  .visual.food { width: 130vw; max-height: 48vh; }
-  .visual.fitness, .visual.beauty, .visual.ec, .visual.marketing { width: 108vw; max-height: 47vh; }
-  .badge {
-    width: 92px; left: 16px; bottom: 74px; font-size: .68rem;
-  }
-  .dots {
-    right: 14px; gap: 8px;
-  }
-  .dots span {
-    width: 20px; height: 20px;
-  }
-  .pager {
-    bottom: 18px; gap: 8px;
-  }
-  .pager button {
-    width: 34px; height: 34px;
-  }
-  .scrollHint { display: none; }
-}
-</style>
-
-<style>
-  .badge,
-  .dots {
-    display: none !important;
-  }
-</style>
-
+    @media (max-width: 760px){
+      html,body{ overflow:auto; }
+      .app{ min-height:100svh; }
+      .header{
+        padding:14px 14px 0;
+        flex-wrap:wrap;
+        justify-content:center;
+      }
+      .brand{ width:100%; text-align:left; font-size:2.2rem; }
+      .nav{
+        width:100%;
+        max-width:none;
+        overflow:auto;
+        justify-content:flex-start;
+      }
+      .hero{ padding-top:104px; }
+      .top-meta{
+        top:142px;
+        left:14px;
+        right:14px;
+        font-size:.72rem;
+      }
+      .title-wrap{
+        top:56px;
+        width:94vw;
+      }
+      .title{
+        font-size:clamp(3.2rem, 18vw, 5rem);
+        line-height:.92;
+      }
+      .title.long{
+        font-size:clamp(2rem, 10vw, 3rem);
+      }
+      .subline{
+        display:none;
+      }
+      .visual{
+        top:58%;
+        max-width:95vw;
+        max-height:48vh;
+      }
+      .pager{ bottom:14px; }
+      .pager button{ width:36px; height:36px; }
+      .scroll{ display:none; }
+    }
+  </style>
 </head>
 <body>
-<div class="app" id="app">
-  <header class="header">
-    <a href="#" class="brand">Hview</a>
-    <nav class="nav" id="nav">
-      <button class="active" data-index="0">FOOD</button>
-      <button data-index="1">FITNESS</button>
-      <button data-index="2">BEAUTY</button>
-      <button data-index="3">EC / D2C</button>
-      <button data-index="4">MARKETING &amp; CONSULTING</button>
-    </nav>
-    <a href="#" class="connect">LET'S CONNECT →</a>
-  </header>
+  <div class="app">
+    <header class="header">
+      <div class="brand">Hview</div>
+      <nav class="nav" id="nav">
+        <button class="active" data-index="0">FOOD</button>
+        <button data-index="1">FITNESS</button>
+        <button data-index="2">BEAUTY</button>
+        <button data-index="3">EC / D2C</button>
+        <button data-index="4">MARKETING &amp; CONSULTING</button>
+      </nav>
+      <div class="connect">LET'S CONNECT →</div>
+    </header>
 
-  <main class="hero" id="hero">
-    <div class="circle one"></div>
-    <div class="circle two"></div>
+    <main class="hero" id="hero">
+      <div class="curve a"></div>
+      <div class="curve b"></div>
+      <div class="curve c"></div>
 
-    <div class="meta">
-      <span id="metaLeft">HVIEW × FOOD</span>
-      <span>OUR STORY</span>
-    </div>
-
-    <section class="titleWrap">
-      <h1 class="title" id="title">FOOD</h1>
-      <div class="subs">
-        <span id="sub1">A magical experience</span>
-        <span id="sub2">by Hview Group</span>
-        <span id="sub3">and crafted variety</span>
+      <div class="top-meta">
+        <span id="metaLeft">HVIEW × FOOD</span>
+        <span>OUR STORY</span>
       </div>
-    </section>
 
-    <div class="slides">
-      <article class="slide active"><img class="visual food" src="images/food.png" alt="FOOD visual"></article>
-      <article class="slide"><img class="visual fitness" src="images/fitness.png" alt="FITNESS visual"></article>
-      <article class="slide"><img class="visual beauty" src="images/beauty.png" alt="BEAUTY visual"></article>
-      <article class="slide"><img class="visual ec" src="images/ec.png" alt="EC / D2C visual"></article>
-      <article class="slide"><img class="visual marketing" src="images/marketing.png" alt="MARKETING visual"></article>
-    </div>
+      <section class="title-wrap">
+        <h1 class="title" id="mainTitle">FOOD</h1>
+        <div class="subline">
+          <span id="sub1">A magical experience</span>
+          <span id="sub2">by Hview Group</span>
+          <span id="sub3">and crafted variety</span>
+        </div>
+      </section>
 
-    <div class="badge" id="badge">ORDER<br>HVIEW FOOD<br>SET OF 4</div>
+      <section class="slides" id="slides">
+        <article class="slide active"><img class="visual food" src="images/food.png" alt="FOOD visual" /></article>
+        <article class="slide"><img class="visual fitness" src="images/fitness.png" alt="FITNESS visual" /></article>
+        <article class="slide"><img class="visual beauty" src="images/beauty.png" alt="BEAUTY visual" /></article>
+        <article class="slide"><img class="visual ec" src="images/ec.png" alt="EC / D2C visual" /></article>
+        <article class="slide"><img class="visual marketing" src="images/marketing.png" alt="MARKETING visual" /></article>
+      </section>
 
-    <div class="dots" aria-hidden="true">
-      <span></span><span></span><span></span><span></span><span></span><span></span>
-    </div>
+      <nav class="pager" id="pager">
+        <button class="active" data-index="0">01</button>
+        <button data-index="1">02</button>
+        <button data-index="2">03</button>
+        <button data-index="3">04</button>
+        <button data-index="4">05</button>
+      </nav>
 
-    <nav class="pager" id="pager">
-      <button class="active" data-index="0">01</button>
-      <button data-index="1">02</button>
-      <button data-index="2">03</button>
-      <button data-index="3">04</button>
-      <button data-index="4">05</button>
-    </nav>
+      <div class="scroll">SCROLL</div>
+    </main>
+  </div>
 
-    <div class="scrollHint">SCROLL</div>
-  </main>
-</div>
+  <script>
+    const data = [
+      {
+        title: "FOOD",
+        meta: "HVIEW × FOOD",
+        sub1: "A magical experience",
+        sub2: "by Hview Group",
+        sub3: "and crafted variety",
+        long: false
+      },
+      {
+        title: "FITNESS",
+        meta: "HVIEW × FITNESS",
+        sub1: "Move with purpose",
+        sub2: "feel your strength",
+        sub3: "and build confidence",
+        long: false
+      },
+      {
+        title: "BEAUTY",
+        meta: "HVIEW × BEAUTY",
+        sub1: "Everyday beauty",
+        sub2: "made more personal",
+        sub3: "and more inspiring",
+        long: false
+      },
+      {
+        title: "EC / D2C",
+        meta: "HVIEW × EC / D2C",
+        sub1: "Products with meaning",
+        sub2: "brands people love",
+        sub3: "and lasting value",
+        long: false
+      },
+      {
+        title: "MARKETING & CONSULTING",
+        meta: "HVIEW × MARKETING",
+        sub1: "Ideas into action",
+        sub2: "strategy into growth",
+        sub3: "and results that last",
+        long: true
+      }
+    ];
 
-<script>
-const data = [
-  { title: "FOOD", meta: "HVIEW × FOOD", sub1: "A magical experience", sub2: "by Hview Group", sub3: "and crafted variety", long: false },
-  { title: "FITNESS", meta: "HVIEW × FITNESS", sub1: "Move with purpose", sub2: "feel your strength", sub3: "and build confidence", long: false },
-  { title: "BEAUTY", meta: "HVIEW × BEAUTY", sub1: "Everyday beauty", sub2: "made more personal", sub3: "and more inspiring", long: false },
-  { title: "EC / D2C", meta: "HVIEW × EC / D2C", sub1: "Products with meaning", sub2: "brands people love", sub3: "and lasting value", long: false },
-  { title: "MARKETING & CONSULTING", meta: "HVIEW × MARKETING", sub1: "Ideas into action", sub2: "strategy into growth", sub3: "and results that last", long: true }
-];
+    const slides = [...document.querySelectorAll('.slide')];
+    const navButtons = [...document.querySelectorAll('#nav button')];
+    const pagerButtons = [...document.querySelectorAll('#pager button')];
+    const titleEl = document.getElementById('mainTitle');
+    const metaLeft = document.getElementById('metaLeft');
+    const sub1 = document.getElementById('sub1');
+    const sub2 = document.getElementById('sub2');
+    const sub3 = document.getElementById('sub3');
+    const hero = document.getElementById('hero');
 
-const slides = [...document.querySelectorAll('.slide')];
-const navButtons = [...document.querySelectorAll('#nav button')];
-const pagerButtons = [...document.querySelectorAll('#pager button')];
-const title = document.getElementById('title');
-const metaLeft = document.getElementById('metaLeft');
-const sub1 = document.getElementById('sub1');
-const sub2 = document.getElementById('sub2');
-const sub3 = document.getElementById('sub3');
-const badge = document.getElementById('badge');
-const hero = document.getElementById('hero');
+    let current = 0;
+    let busy = false;
+    let wheelAccum = 0;
+    let touchX = 0;
+    let touchY = 0;
 
-let current = 0;
-let busy = false;
-let wheelAcc = 0;
-let touchX = 0;
-let touchY = 0;
+    function syncControls(index){
+      navButtons.forEach((btn,i)=>btn.classList.toggle('active', i===index));
+      pagerButtons.forEach((btn,i)=>btn.classList.toggle('active', i===index));
+    }
 
-function setControls(index) {
-  navButtons.forEach((b, i) => b.classList.toggle('active', i === index));
-  pagerButtons.forEach((b, i) => b.classList.toggle('active', i === index));
-}
+    function syncText(index){
+      const d = data[index];
+      titleEl.style.opacity = '0';
+      titleEl.style.transform = 'translateY(8px)';
+      setTimeout(() => {
+        titleEl.textContent = d.title;
+        titleEl.classList.toggle('long', d.long);
+        metaLeft.textContent = d.meta;
+        sub1.textContent = d.sub1;
+        sub2.textContent = d.sub2;
+        sub3.textContent = d.sub3;
+        titleEl.style.opacity = '1';
+        titleEl.style.transform = 'translateY(0)';
+      }, 120);
+    }
 
-function setText(index) {
-  const d = data[index];
-  title.style.opacity = '0';
-  title.style.transform = 'translateY(10px)';
-  setTimeout(() => {
-    title.textContent = d.title;
-    title.classList.toggle('long', d.long);
-    metaLeft.textContent = d.meta;
-    sub1.textContent = d.sub1;
-    sub2.textContent = d.sub2;
-    sub3.textContent = d.sub3;
-    badge.classList.toggle('hidden', index !== 0);
-    title.style.opacity = '1';
-    title.style.transform = 'translateY(0)';
-  }, 140);
-}
+    function cleanup(index){
+      slides.forEach((slide, i) => {
+        slide.className = 'slide' + (i === index ? ' active' : '');
+      });
+    }
 
-function cleanup(activeIndex) {
-  slides.forEach((slide, i) => {
-    slide.className = 'slide' + (i === activeIndex ? ' active' : '');
-  });
-}
+    function goTo(next){
+      if (busy || next === current || next < 0 || next >= slides.length) return;
+      busy = true;
 
-function goTo(next) {
-  if (busy || next === current || next < 0 || next >= slides.length) return;
-  busy = true;
-  const dir = next > current ? 1 : -1;
-  const currentSlide = slides[current];
-  const nextSlide = slides[next];
+      const dir = next > current ? 1 : -1;
+      const currentSlide = slides[current];
+      const nextSlide = slides[next];
 
-  nextSlide.className = 'slide ' + (dir > 0 ? 'enter-right' : 'enter-left');
-  nextSlide.getBoundingClientRect();
-  currentSlide.className = 'slide ' + (dir > 0 ? 'leave-left' : 'leave-right');
-  nextSlide.className = 'slide active';
+      nextSlide.className = 'slide ' + (dir > 0 ? 'enter-right' : 'enter-left');
+      nextSlide.getBoundingClientRect();
+      currentSlide.className = 'slide ' + (dir > 0 ? 'exit-left' : 'exit-right');
+      nextSlide.className = 'slide active';
 
-  setText(next);
-  setControls(next);
+      syncText(next);
+      syncControls(next);
 
-  setTimeout(() => {
-    current = next;
-    cleanup(current);
-    busy = false;
-  }, 930);
-}
+      setTimeout(() => {
+        current = next;
+        cleanup(current);
+        busy = false;
+      }, 860);
+    }
 
-function moveBy(dir) { goTo(current + dir); }
+    function moveBy(step){
+      goTo(current + step);
+    }
 
-window.addEventListener('wheel', (e) => {
-  e.preventDefault();
-  if (busy) return;
-  wheelAcc += e.deltaY;
-  if (Math.abs(wheelAcc) >= 60) {
-    moveBy(wheelAcc > 0 ? 1 : -1);
-    wheelAcc = 0;
-  }
-}, { passive: false });
+    window.addEventListener('wheel', (e) => {
+      if (window.innerWidth <= 760) return;
+      e.preventDefault();
+      if (busy) return;
+      wheelAccum += e.deltaY;
+      if (Math.abs(wheelAccum) >= 50) {
+        moveBy(wheelAccum > 0 ? 1 : -1);
+        wheelAccum = 0;
+      }
+    }, {passive:false});
 
-window.addEventListener('keydown', (e) => {
-  if (['ArrowRight','ArrowDown','PageDown'].includes(e.key)) {
-    e.preventDefault();
-    moveBy(1);
-  }
-  if (['ArrowLeft','ArrowUp','PageUp'].includes(e.key)) {
-    e.preventDefault();
-    moveBy(-1);
-  }
-});
+    window.addEventListener('keydown', (e) => {
+      if (['ArrowRight','ArrowDown','PageDown'].includes(e.key)) {
+        e.preventDefault();
+        moveBy(1);
+      }
+      if (['ArrowLeft','ArrowUp','PageUp'].includes(e.key)) {
+        e.preventDefault();
+        moveBy(-1);
+      }
+    });
 
-hero.addEventListener('touchstart', (e) => {
-  const t = e.touches[0];
-  touchX = t.clientX;
-  touchY = t.clientY;
-}, { passive: true });
+    hero.addEventListener('touchstart', (e) => {
+      const t = e.touches[0];
+      touchX = t.clientX;
+      touchY = t.clientY;
+    }, {passive:true});
 
-hero.addEventListener('touchend', (e) => {
-  const t = e.changedTouches[0];
-  const dx = t.clientX - touchX;
-  const dy = t.clientY - touchY;
-  const dominant = Math.abs(dx) > Math.abs(dy) ? dx : -dy;
-  if (Math.abs(dominant) > 55) {
-    moveBy(dominant < 0 ? 1 : -1);
-  }
-}, { passive: true });
+    hero.addEventListener('touchend', (e) => {
+      const t = e.changedTouches[0];
+      const dx = t.clientX - touchX;
+      const dy = t.clientY - touchY;
+      const dominant = Math.abs(dx) > Math.abs(dy) ? dx : -dy;
+      if (Math.abs(dominant) > 52) moveBy(dominant < 0 ? 1 : -1);
+    }, {passive:true});
 
-[...navButtons, ...pagerButtons].forEach(btn => {
-  btn.addEventListener('click', () => goTo(Number(btn.dataset.index)));
-});
-</script>
+    [...navButtons, ...pagerButtons].forEach(btn => {
+      btn.addEventListener('click', () => goTo(Number(btn.dataset.index)));
+    });
+  </script>
 </body>
 </html>

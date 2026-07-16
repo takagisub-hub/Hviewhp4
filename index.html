@@ -1,621 +1,203 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hview - Visual Slider</title>
-  <style>
-    :root{
-      --bg1:#f06d8d;
-      --bg2:#ea5b7f;
-      --bg3:#e34e75;
-      --white:#fffaf8;
-      --line:rgba(255,255,255,.28);
-      --soft:rgba(255,255,255,.12);
-      --shadow:rgba(102,24,48,.16);
-    }
-    *{box-sizing:border-box}
-    html,body{
-      margin:0;
-      width:100%;
-      height:100%;
-      overflow:hidden;
-      font-family: Inter, "Helvetica Neue", Arial, sans-serif;
-      background: linear-gradient(180deg,var(--bg1) 0%, var(--bg2) 52%, var(--bg3) 100%);
-      color:var(--white);
-    }
-    body::before{
-      content:"";
-      position:fixed;
-      inset:0;
-      background:
-        radial-gradient(circle at 50% 38%, rgba(255,255,255,.07), transparent 28%),
-        radial-gradient(circle at 30% 70%, rgba(255,255,255,.04), transparent 32%),
-        radial-gradient(circle at 70% 18%, rgba(255,255,255,.03), transparent 25%);
-      pointer-events:none;
-    }
-    .app{
-      position:relative;
-      width:100%;
-      height:100%;
-      overflow:hidden;
-      isolation:isolate;
-    }
-    .header{
-      position:absolute;
-      top:0; left:0; right:0;
-      z-index:20;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:20px;
-      padding:18px 28px;
-    }
-    .brand{
-      font-size:3rem;
-      font-weight:900;
-      letter-spacing:-0.06em;
-      line-height:1;
-    }
-    .nav{
-      display:flex;
-      align-items:center;
-      gap:6px;
-      padding:8px;
-      border-radius:999px;
-      background:rgba(255,255,255,.12);
-      backdrop-filter: blur(10px);
-      border:1px solid rgba(255,255,255,.18);
-      box-shadow:0 10px 30px var(--shadow);
-    }
-    .nav button{
-      appearance:none;
-      border:0;
-      background:transparent;
-      color:var(--white);
-      font-size:.78rem;
-      font-weight:800;
-      letter-spacing:.05em;
-      padding:12px 16px;
-      border-radius:999px;
-      cursor:pointer;
-      transition:.25s ease;
-      white-space:nowrap;
-      opacity:.86;
-    }
-    .nav button:hover{background:rgba(255,255,255,.10); opacity:1}
-    .nav button.active{
-      background:rgba(255,255,255,.98);
-      color:#df4f74;
-      opacity:1;
-      box-shadow:0 10px 18px rgba(255,255,255,.14);
-    }
-    .connect{
-      border:1px solid rgba(255,255,255,.32);
-      border-radius:999px;
-      padding:14px 20px;
-      font-weight:800;
-      letter-spacing:.04em;
-      background:rgba(255,255,255,.08);
-      white-space:nowrap;
-    }
-
-    .hero{
-      position:absolute;
-      inset:0;
-      padding-top:90px;
-      overflow:hidden;
-    }
-
-    .curve{
-      position:absolute;
-      border:3px solid var(--line);
-      border-radius:50%;
-      pointer-events:none;
-      opacity:.75;
-    }
-    .curve.a{ width:420px; height:420px; left:-180px; bottom:-220px; }
-    .curve.b{ width:460px; height:460px; right:-210px; bottom:-260px; }
-    .curve.c{ width:320px; height:320px; right:12%; top:-180px; opacity:.45; }
-
-    .top-meta{
-      position:absolute;
-      top:118px;
-      left:32px;
-      right:32px;
-      z-index:8;
-      display:flex;
-      justify-content:space-between;
-      font-size:1rem;
-      font-weight:800;
-      letter-spacing:-0.02em;
-      opacity:.95;
-    }
-
-    .title-wrap{
-      position:absolute;
-      top:6px;
-      left:50%;
-      transform:translateX(-50%);
-      width:min(1440px, 96vw);
-      z-index:5;
-      text-align:center;
-      pointer-events:none;
-    }
-    .title{
-      margin:0;
-      font-size:clamp(5.8rem, 14vw, 10rem);
-      font-weight:900;
-      letter-spacing:-0.08em;
-      line-height:.88;
-      text-transform:uppercase;
-      color:rgba(255,251,249,.97);
-      text-shadow:0 2px 0 rgba(255,255,255,.04);
-    }
-    .title.long{
-      font-size:clamp(3.4rem, 7vw, 6rem);
-      letter-spacing:-0.05em;
-      line-height:.95;
-    }
-    .subline{
-      margin-top:10px;
-      display:grid;
-      grid-template-columns:1fr 1fr 1fr;
-      gap:16px;
-      font-size:1rem;
-      font-weight:800;
-      color:rgba(255,251,249,.96);
-    }
-    .subline span:nth-child(1){text-align:left}
-    .subline span:nth-child(2){text-align:center}
-    .subline span:nth-child(3){text-align:right}
-
-    .slides{
-      position:absolute;
-      inset:0;
-    }
-    .slide{
-      position:absolute;
-      inset:0;
-      opacity:0;
-      visibility:hidden;
-      transform:translateX(105%);
-      transition:
-        transform .85s cubic-bezier(.22,.9,.24,1),
-        opacity .35s ease,
-        visibility .35s ease;
-    }
-    .slide.active{
-      opacity:1;
-      visibility:visible;
-      transform:translateX(0);
-      z-index:2;
-    }
-    .slide.exit-left{ opacity:0; visibility:visible; transform:translateX(-105%); z-index:1; }
-    .slide.exit-right{ opacity:0; visibility:visible; transform:translateX(105%); z-index:1; }
-    .slide.enter-left{ opacity:0; visibility:visible; transform:translateX(-105%); z-index:2; }
-    .slide.enter-right{ opacity:0; visibility:visible; transform:translateX(105%); z-index:2; }
-
-    .visual{
-      position:absolute;
-      left:50%;
-      top:57%;
-      transform:translate(-50%,-50%);
-      max-width:min(1280px,88vw);
-      max-height:64vh;
-      object-fit:contain;
-      filter:drop-shadow(0 20px 35px rgba(123,29,56,.12));
-      user-select:none;
-      -webkit-user-drag:none;
-    }
-    .visual.food{ max-width:min(1320px,90vw); max-height:64vh; }
-    .visual.fitness{ max-width:min(1180px,86vw); max-height:61vh; }
-    .visual.beauty{ max-width:min(1260px,88vw); max-height:61vh; }
-    .visual.ec{ max-width:min(1260px,88vw); max-height:61vh; }
-    .visual.marketing{ max-width:min(1200px,86vw); max-height:59vh; }
-
-    .pager{
-      position:absolute;
-      left:50%;
-      bottom:18px;
-      transform:translateX(-50%);
-      display:flex;
-      gap:8px;
-      z-index:12;
-    }
-    .pager button{
-      width:42px;
-      height:42px;
-      border:0;
-      border-radius:999px;
-      background:transparent;
-      color:rgba(255,255,255,.95);
-      font-size:.82rem;
-      font-weight:900;
-      cursor:pointer;
-      transition:.25s ease;
-    }
-    .pager button.active{
-      background:rgba(255,255,255,.18);
-      box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);
-    }
-
-    .scroll{
-      position:absolute;
-      right:18px;
-      bottom:120px;
-      writing-mode:vertical-rl;
-      font-size:.95rem;
-      font-weight:900;
-      letter-spacing:.14em;
-      z-index:12;
-      opacity:.95;
-    }
-
-    @media (max-width: 1080px){
-      .header{ padding:16px 18px; }
-      .brand{ font-size:2.4rem; }
-      .nav{ gap:2px; padding:6px; max-width:60vw; overflow:auto; }
-      .nav button{ padding:10px 12px; font-size:.72rem; }
-      .connect{ display:none; }
-      .title{ font-size:clamp(4rem, 14vw, 7rem); }
-      .title.long{ font-size:clamp(2.6rem, 8vw, 4.4rem); }
-      .subline{ font-size:.85rem; }
-      .visual{ max-width:92vw; max-height:58vh; }
-    }
-
-    @media (max-width: 760px){
-      html,body{ overflow:auto; }
-      .app{ min-height:100svh; }
-      .header{
-        padding:14px 14px 0;
-        flex-wrap:wrap;
-        justify-content:center;
-      }
-      .brand{ width:100%; text-align:left; font-size:2.2rem; }
-      .nav{
-        width:100%;
-        max-width:none;
-        overflow:auto;
-        justify-content:flex-start;
-      }
-      .hero{ padding-top:104px; }
-      .top-meta{
-        top:142px;
-        left:14px;
-        right:14px;
-        font-size:.72rem;
-      }
-      .title-wrap{
-        top:56px;
-        width:94vw;
-      }
-      .title{
-        font-size:clamp(3.2rem, 18vw, 5rem);
-        line-height:.92;
-      }
-      .title.long{
-        font-size:clamp(2rem, 10vw, 3rem);
-      }
-      .subline{
-        display:none;
-      }
-      .visual{
-        top:58%;
-        max-width:95vw;
-        max-height:48vh;
-      }
-      .pager{ bottom:14px; }
-      .pager button{ width:36px; height:36px; }
-      .scroll{ display:none; }
-    }
-  </style>
-
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hview Hero Orange</title>
 <style>
-  /* Seamless full-bleed visuals: removes the visible rectangular image frame */
-  .visual,
-  .visual.food,
-  .visual.fitness,
-  .visual.beauty,
-  .visual.ec,
-  .visual.marketing {
-    left: 0 !important;
-    top: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    max-width: none !important;
-    max-height: none !important;
-    transform: none !important;
-    object-fit: cover !important;
-    object-position: center 57% !important;
-    filter: none !important;
-  }
-
-  /* Keep the main title below the header and fully inside the viewport */
-  .title-wrap {
-    top: 82px !important;
-    width: min(1380px, 90vw) !important;
-  }
-
-  .title {
-    font-size: clamp(4.8rem, 9.2vw, 8rem) !important;
-    line-height: .84 !important;
-    letter-spacing: -.065em !important;
-  }
-
-  .title.long {
-    max-width: 1180px;
-    margin-inline: auto;
-    font-size: clamp(2.8rem, 5.3vw, 5rem) !important;
-    line-height: .92 !important;
-    letter-spacing: -.045em !important;
-  }
-
-  .top-meta {
-    top: 138px !important;
-  }
-
-  .subline {
-    margin-top: 10px !important;
-    padding-inline: 4px;
-  }
-
-  @media (max-width: 1080px) {
-    .title-wrap {
-      top: 92px !important;
-      width: 92vw !important;
-    }
-
-    .title {
-      font-size: clamp(4rem, 10vw, 6.4rem) !important;
-    }
-
-    .title.long {
-      font-size: clamp(2.4rem, 6vw, 4rem) !important;
-    }
-
-    .top-meta {
-      top: 150px !important;
-    }
-  }
-
-  @media (max-width: 760px) {
-    .title-wrap {
-      top: 118px !important;
-      width: 92vw !important;
-    }
-
-    .title {
-      font-size: clamp(3.2rem, 16vw, 4.8rem) !important;
-    }
-
-    .title.long {
-      font-size: clamp(1.9rem, 8.5vw, 2.8rem) !important;
-    }
-
-    .top-meta {
-      top: 184px !important;
-    }
-
-    .visual,
-    .visual.food,
-    .visual.fitness,
-    .visual.beauty,
-    .visual.ec,
-    .visual.marketing {
-      object-position: center 60% !important;
-    }
-  }
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Inter+Tight:wght@600;700;800&display=swap');
+:root {
+  --orange1: #ff8a2a;
+  --orange2: #f97316;
+  --orange3: #ef5b2a;
+  --pink: #f35177;
+  --white: rgba(255,255,255,.98);
+  --white-soft: rgba(255,255,255,.84);
+  --ease: cubic-bezier(.22,.82,.2,1);
+}
+*{box-sizing:border-box}
+html,body{
+  margin:0; width:100%; height:100%; overflow:hidden;
+  font-family:"DM Sans",sans-serif;
+  color:#fff;
+  background: linear-gradient(155deg,var(--orange1) 0%, var(--orange2) 48%, var(--orange3) 100%);
+}
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(255,255,255,.18), transparent 28%),
+    radial-gradient(circle at 20% 70%, rgba(255,255,255,.08), transparent 22%),
+    radial-gradient(circle at 80% 20%, rgba(255,255,255,.07), transparent 18%);
+}
+.app{position:relative; width:100%; height:100%; overflow:hidden; isolation:isolate;}
+.header{
+  position:absolute; inset:0 0 auto 0; z-index:30; height:92px;
+  display:grid; grid-template-columns:190px 1fr 210px; align-items:center; gap:20px;
+  padding:18px 32px;
+}
+.brand{
+  color:#fff; text-decoration:none; font-family:"Inter Tight",sans-serif;
+  font-size:2.2rem; font-weight:800; letter-spacing:-.055em;
+}
+.nav{
+  justify-self:center; display:flex; gap:4px; padding:6px;
+  border-radius:999px; background:rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.26); backdrop-filter:blur(12px);
+}
+.nav button{
+  border:0; background:transparent; color:rgba(255,255,255,.82); border-radius:999px;
+  padding:10px 16px; font-size:.75rem; font-weight:700; letter-spacing:.04em; cursor:pointer;
+}
+.nav button.active{background:#fff; color:#ee5d4f; box-shadow:0 10px 24px rgba(0,0,0,.12);}
+.connect{
+  justify-self:end; color:#fff; text-decoration:none; border:1px solid rgba(255,255,255,.35);
+  background:rgba(255,255,255,.08); border-radius:999px; padding:13px 20px;
+  font-size:.8rem; font-weight:700; letter-spacing:.04em;
+}
+.hero{position:absolute; inset:92px 0 0; overflow:hidden;}
+.circle{position:absolute; border:3px solid rgba(255,255,255,.22); border-radius:50%; pointer-events:none; z-index:1;}
+.circle.one{width:420px; height:420px; left:-160px; bottom:-210px;}
+.circle.two{width:360px; height:360px; right:-140px; top:-90px;}
+.meta{
+  position:absolute; z-index:15; top:36px; left:32px; right:32px; display:flex; justify-content:space-between;
+  color:var(--white); font-family:"Inter Tight",sans-serif; font-size:1.05rem; font-weight:700;
+}
+.titleWrap{
+  position:absolute; top:76px; left:50%; transform:translateX(-50%); width:min(95vw, 1540px); text-align:center; z-index:14; pointer-events:none;
+}
+.title{
+  margin:0; color:var(--white); font-family:"Inter Tight",sans-serif; font-size:clamp(5rem,10vw,9.2rem);
+  font-weight:800; line-height:.83; letter-spacing:-.08em; text-transform:uppercase; transition:opacity .28s ease, transform .5s var(--ease);
+}
+.title.long{font-size:clamp(3rem,6vw,5.9rem); line-height:.9; letter-spacing:-.055em;}
+.subs{
+  margin-top:18px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px;
+  color:var(--white-soft); font-family:"Inter Tight",sans-serif; font-size:1rem; font-weight:700;
+}
+.subs span:nth-child(1){text-align:left}
+.subs span:nth-child(2){text-align:center}
+.subs span:nth-child(3){text-align:right}
+.slides{position:absolute; inset:0; z-index:5;}
+.slide{
+  position:absolute; inset:0; opacity:0; visibility:hidden; transform:translateX(115%);
+  transition:transform .9s var(--ease), opacity .5s ease; pointer-events:none;
+}
+.slide.active{opacity:1; visibility:visible; transform:translateX(0); z-index:5;}
+.slide.enter-right{opacity:0; visibility:visible; transform:translateX(115%); z-index:6;}
+.slide.enter-left{opacity:0; visibility:visible; transform:translateX(-115%); z-index:6;}
+.slide.leave-left{opacity:0; visibility:visible; transform:translateX(-115%); z-index:5;}
+.slide.leave-right{opacity:0; visibility:visible; transform:translateX(115%); z-index:5;}
+.slide::before{
+  content:""; position:absolute; left:50%; top:58%; transform:translate(-50%,-50%);
+  width:min(76vw,1120px); height:min(54vh,520px); border-radius:46px;
+  background:radial-gradient(circle at 50% 32%, rgba(255,255,255,.12), transparent 45%);
+  opacity:.55;
+}
+.visual{
+  position:absolute; left:50%; top:60%; transform:translate(-50%,-50%); display:block; object-fit:contain;
+  filter: drop-shadow(0 26px 28px rgba(120,41,0,.18)); user-select:none; -webkit-user-drag:none; z-index:7;
+}
+.visual.food{width:min(80vw,1320px); max-height:58vh;}
+.visual.fitness{width:min(56vw,820px); max-height:54vh;}
+.visual.beauty{width:min(58vw,900px); max-height:54vh;}
+.visual.ec{width:min(62vw,980px); max-height:54vh;}
+.visual.marketing{width:min(60vw,940px); max-height:54vh;}
+.pager{position:absolute; left:50%; bottom:24px; transform:translateX(-50%); display:flex; gap:10px; z-index:20;}
+.pager button{width:38px; height:38px; border-radius:999px; border:0; background:transparent; color:rgba(255,255,255,.82); font-family:"Inter Tight",sans-serif; font-weight:700; cursor:pointer;}
+.pager button.active{background:rgba(255,255,255,.2); color:white; box-shadow: inset 0 0 0 1px rgba(255,255,255,.22);}
+.scrollHint{position:absolute; right:22px; bottom:96px; writing-mode:vertical-rl; color:rgba(255,255,255,.84); font-size:.74rem; font-weight:700; letter-spacing:.12em; z-index:20;}
+@media (max-width: 900px){
+  .header{height:76px; grid-template-columns:1fr auto; padding:12px 16px;}
+  .nav,.connect{display:none}
+  .hero{inset:76px 0 0}
+  .meta{top:20px; left:18px; right:18px; font-size:.76rem}
+  .titleWrap{top:48px; width:calc(100vw - 28px)}
+  .title{font-size:clamp(3.6rem,15vw,5.4rem)}
+  .title.long{font-size:clamp(2rem,8vw,3rem)}
+  .subs{grid-template-columns:1fr; text-align:left; gap:6px; font-size:.78rem; margin-top:10px}
+  .subs span:nth-child(1), .subs span:nth-child(2), .subs span:nth-child(3){text-align:left}
+  .slide::before{width:min(92vw,620px); height:min(42vh,320px); top:62%}
+  .visual.food{width:110vw; max-height:40vh}
+  .visual.fitness,.visual.beauty,.visual.ec,.visual.marketing{width:98vw; max-height:38vh}
+  .pager{bottom:16px; gap:8px}
+  .pager button{width:34px; height:34px}
+  .scrollHint{display:none}
+}
 </style>
-
 </head>
 <body>
-  <div class="app">
-    <header class="header">
-      <div class="brand">Hview</div>
-      <nav class="nav" id="nav">
-        <button class="active" data-index="0">FOOD</button>
-        <button data-index="1">FITNESS</button>
-        <button data-index="2">BEAUTY</button>
-        <button data-index="3">EC / D2C</button>
-        <button data-index="4">MARKETING &amp; CONSULTING</button>
-      </nav>
-      <div class="connect">LET'S CONNECT →</div>
-    </header>
-
-    <main class="hero" id="hero">
-      <div class="curve a"></div>
-      <div class="curve b"></div>
-      <div class="curve c"></div>
-
-      <div class="top-meta">
-        <span id="metaLeft">HVIEW × FOOD</span>
-        <span>OUR STORY</span>
+<div class="app">
+  <header class="header">
+    <a href="#" class="brand">Hview</a>
+    <nav class="nav" id="nav">
+      <button class="active" data-index="0">FOOD</button>
+      <button data-index="1">FITNESS</button>
+      <button data-index="2">BEAUTY</button>
+      <button data-index="3">EC / D2C</button>
+      <button data-index="4">MARKETING &amp; CONSULTING</button>
+    </nav>
+    <a href="#" class="connect">LET'S CONNECT →</a>
+  </header>
+  <main class="hero" id="hero">
+    <div class="circle one"></div>
+    <div class="circle two"></div>
+    <div class="meta">
+      <span id="metaLeft">HVIEW × FOOD</span>
+      <span>OUR STORY</span>
+    </div>
+    <section class="titleWrap">
+      <h1 class="title" id="title">FOOD</h1>
+      <div class="subs">
+        <span id="sub1">A magical experience</span>
+        <span id="sub2">by Hview Group</span>
+        <span id="sub3">and crafted variety</span>
       </div>
-
-      <section class="title-wrap">
-        <h1 class="title" id="mainTitle">FOOD</h1>
-        <div class="subline">
-          <span id="sub1">A magical experience</span>
-          <span id="sub2">by Hview Group</span>
-          <span id="sub3">and crafted variety</span>
-        </div>
-      </section>
-
-      <section class="slides" id="slides">
-        <article class="slide active"><img class="visual food" src="images/food.png" alt="FOOD visual" /></article>
-        <article class="slide"><img class="visual fitness" src="images/fitness.png" alt="FITNESS visual" /></article>
-        <article class="slide"><img class="visual beauty" src="images/beauty.png" alt="BEAUTY visual" /></article>
-        <article class="slide"><img class="visual ec" src="images/ec.png" alt="EC / D2C visual" /></article>
-        <article class="slide"><img class="visual marketing" src="images/marketing.png" alt="MARKETING visual" /></article>
-      </section>
-
-      <nav class="pager" id="pager">
-        <button class="active" data-index="0">01</button>
-        <button data-index="1">02</button>
-        <button data-index="2">03</button>
-        <button data-index="3">04</button>
-        <button data-index="4">05</button>
-      </nav>
-
-      <div class="scroll">SCROLL</div>
-    </main>
-  </div>
-
-  <script>
-    const data = [
-      {
-        title: "FOOD",
-        meta: "HVIEW × FOOD",
-        sub1: "A magical experience",
-        sub2: "by Hview Group",
-        sub3: "and crafted variety",
-        long: false
-      },
-      {
-        title: "FITNESS",
-        meta: "HVIEW × FITNESS",
-        sub1: "Move with purpose",
-        sub2: "feel your strength",
-        sub3: "and build confidence",
-        long: false
-      },
-      {
-        title: "BEAUTY",
-        meta: "HVIEW × BEAUTY",
-        sub1: "Everyday beauty",
-        sub2: "made more personal",
-        sub3: "and more inspiring",
-        long: false
-      },
-      {
-        title: "EC / D2C",
-        meta: "HVIEW × EC / D2C",
-        sub1: "Products with meaning",
-        sub2: "brands people love",
-        sub3: "and lasting value",
-        long: false
-      },
-      {
-        title: "MARKETING & CONSULTING",
-        meta: "HVIEW × MARKETING",
-        sub1: "Ideas into action",
-        sub2: "strategy into growth",
-        sub3: "and results that last",
-        long: true
-      }
-    ];
-
-    const slides = [...document.querySelectorAll('.slide')];
-    const navButtons = [...document.querySelectorAll('#nav button')];
-    const pagerButtons = [...document.querySelectorAll('#pager button')];
-    const titleEl = document.getElementById('mainTitle');
-    const metaLeft = document.getElementById('metaLeft');
-    const sub1 = document.getElementById('sub1');
-    const sub2 = document.getElementById('sub2');
-    const sub3 = document.getElementById('sub3');
-    const hero = document.getElementById('hero');
-
-    let current = 0;
-    let busy = false;
-    let wheelAccum = 0;
-    let touchX = 0;
-    let touchY = 0;
-
-    function syncControls(index){
-      navButtons.forEach((btn,i)=>btn.classList.toggle('active', i===index));
-      pagerButtons.forEach((btn,i)=>btn.classList.toggle('active', i===index));
-    }
-
-    function syncText(index){
-      const d = data[index];
-      titleEl.style.opacity = '0';
-      titleEl.style.transform = 'translateY(8px)';
-      setTimeout(() => {
-        titleEl.textContent = d.title;
-        titleEl.classList.toggle('long', d.long);
-        metaLeft.textContent = d.meta;
-        sub1.textContent = d.sub1;
-        sub2.textContent = d.sub2;
-        sub3.textContent = d.sub3;
-        titleEl.style.opacity = '1';
-        titleEl.style.transform = 'translateY(0)';
-      }, 120);
-    }
-
-    function cleanup(index){
-      slides.forEach((slide, i) => {
-        slide.className = 'slide' + (i === index ? ' active' : '');
-      });
-    }
-
-    function goTo(next){
-      if (busy || next === current || next < 0 || next >= slides.length) return;
-      busy = true;
-
-      const dir = next > current ? 1 : -1;
-      const currentSlide = slides[current];
-      const nextSlide = slides[next];
-
-      nextSlide.className = 'slide ' + (dir > 0 ? 'enter-right' : 'enter-left');
-      nextSlide.getBoundingClientRect();
-      currentSlide.className = 'slide ' + (dir > 0 ? 'exit-left' : 'exit-right');
-      nextSlide.className = 'slide active';
-
-      syncText(next);
-      syncControls(next);
-
-      setTimeout(() => {
-        current = next;
-        cleanup(current);
-        busy = false;
-      }, 860);
-    }
-
-    function moveBy(step){
-      goTo(current + step);
-    }
-
-    window.addEventListener('wheel', (e) => {
-      if (window.innerWidth <= 760) return;
-      e.preventDefault();
-      if (busy) return;
-      wheelAccum += e.deltaY;
-      if (Math.abs(wheelAccum) >= 50) {
-        moveBy(wheelAccum > 0 ? 1 : -1);
-        wheelAccum = 0;
-      }
-    }, {passive:false});
-
-    window.addEventListener('keydown', (e) => {
-      if (['ArrowRight','ArrowDown','PageDown'].includes(e.key)) {
-        e.preventDefault();
-        moveBy(1);
-      }
-      if (['ArrowLeft','ArrowUp','PageUp'].includes(e.key)) {
-        e.preventDefault();
-        moveBy(-1);
-      }
-    });
-
-    hero.addEventListener('touchstart', (e) => {
-      const t = e.touches[0];
-      touchX = t.clientX;
-      touchY = t.clientY;
-    }, {passive:true});
-
-    hero.addEventListener('touchend', (e) => {
-      const t = e.changedTouches[0];
-      const dx = t.clientX - touchX;
-      const dy = t.clientY - touchY;
-      const dominant = Math.abs(dx) > Math.abs(dy) ? dx : -dy;
-      if (Math.abs(dominant) > 52) moveBy(dominant < 0 ? 1 : -1);
-    }, {passive:true});
-
-    [...navButtons, ...pagerButtons].forEach(btn => {
-      btn.addEventListener('click', () => goTo(Number(btn.dataset.index)));
-    });
-  </script>
+    </section>
+    <div class="slides">
+      <article class="slide active"><img class="visual food" src="food.png" alt="FOOD visual"></article>
+      <article class="slide"><img class="visual fitness" src="fitness.png" alt="FITNESS visual"></article>
+      <article class="slide"><img class="visual beauty" src="beauty.png" alt="BEAUTY visual"></article>
+      <article class="slide"><img class="visual ec" src="ec.png" alt="EC / D2C visual"></article>
+      <article class="slide"><img class="visual marketing" src="marketing.png" alt="MARKETING visual"></article>
+    </div>
+    <nav class="pager" id="pager">
+      <button class="active" data-index="0">01</button>
+      <button data-index="1">02</button>
+      <button data-index="2">03</button>
+      <button data-index="3">04</button>
+      <button data-index="4">05</button>
+    </nav>
+    <div class="scrollHint">SCROLL</div>
+  </main>
+</div>
+<script>
+const data = [
+  { title: "FOOD", meta: "HVIEW × FOOD", sub1: "A magical experience", sub2: "by Hview Group", sub3: "and crafted variety", long: false },
+  { title: "FITNESS", meta: "HVIEW × FITNESS", sub1: "Move with purpose", sub2: "feel your strength", sub3: "and build confidence", long: false },
+  { title: "BEAUTY", meta: "HVIEW × BEAUTY", sub1: "Everyday beauty", sub2: "made more personal", sub3: "and more inspiring", long: false },
+  { title: "EC / D2C", meta: "HVIEW × EC / D2C", sub1: "Products with meaning", sub2: "brands people love", sub3: "and lasting value", long: false },
+  { title: "MARKETING & CONSULTING", meta: "HVIEW × MARKETING", sub1: "Ideas into action", sub2: "strategy into growth", sub3: "and results that last", long: true }
+];
+const slides=[...document.querySelectorAll('.slide')];
+const navButtons=[...document.querySelectorAll('#nav button')];
+const pagerButtons=[...document.querySelectorAll('#pager button')];
+const title=document.getElementById('title');
+const metaLeft=document.getElementById('metaLeft');
+const sub1=document.getElementById('sub1');
+const sub2=document.getElementById('sub2');
+const sub3=document.getElementById('sub3');
+const hero=document.getElementById('hero');
+let current=0,busy=false,wheelAcc=0,touchX=0,touchY=0;
+function setControls(index){navButtons.forEach((b,i)=>b.classList.toggle('active',i===index));pagerButtons.forEach((b,i)=>b.classList.toggle('active',i===index));}
+function setText(index){const d=data[index];title.style.opacity='0';title.style.transform='translateY(10px)';setTimeout(()=>{title.textContent=d.title;title.classList.toggle('long',d.long);metaLeft.textContent=d.meta;sub1.textContent=d.sub1;sub2.textContent=d.sub2;sub3.textContent=d.sub3;title.style.opacity='1';title.style.transform='translateY(0)';},140)}
+function cleanup(activeIndex){slides.forEach((slide,i)=>slide.className='slide'+(i===activeIndex?' active':''))}
+function goTo(next){if(busy||next===current||next<0||next>=slides.length)return;busy=true;const dir=next>current?1:-1;const currentSlide=slides[current];const nextSlide=slides[next];nextSlide.className='slide '+(dir>0?'enter-right':'enter-left');nextSlide.getBoundingClientRect();currentSlide.className='slide '+(dir>0?'leave-left':'leave-right');nextSlide.className='slide active';setText(next);setControls(next);setTimeout(()=>{current=next;cleanup(current);busy=false},930)}
+function moveBy(dir){goTo(current+dir)}
+window.addEventListener('wheel',(e)=>{e.preventDefault();if(busy)return;wheelAcc+=e.deltaY;if(Math.abs(wheelAcc)>=60){moveBy(wheelAcc>0?1:-1);wheelAcc=0}},{passive:false});
+window.addEventListener('keydown',(e)=>{if(['ArrowRight','ArrowDown','PageDown'].includes(e.key)){e.preventDefault();moveBy(1)}if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();moveBy(-1)}});
+hero.addEventListener('touchstart',(e)=>{const t=e.touches[0];touchX=t.clientX;touchY=t.clientY},{passive:true});
+hero.addEventListener('touchend',(e)=>{const t=e.changedTouches[0];const dx=t.clientX-touchX;const dy=t.clientY-touchY;const dominant=Math.abs(dx)>Math.abs(dy)?dx:-dy;if(Math.abs(dominant)>55){moveBy(dominant<0?1:-1)}},{passive:true});
+[...navButtons,...pagerButtons].forEach(btn=>btn.addEventListener('click',()=>goTo(Number(btn.dataset.index))));
+</script>
 </body>
 </html>

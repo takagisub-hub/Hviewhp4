@@ -1,2 +1,5 @@
-この版はFOOD画像をHTML内に埋め込んでいるため、index.html単体で画像が表示されます。
-今後画像を差し替える場合は、HTML下部のSLIDES内のimageを変更してください。
+修正版
+- FOOD画像は元画像をそのまま使用（未加工）
+- FOODなどの文字は、商品に極力かぶらないよう左上配置に調整
+- FITNESS / BEAUTY / EC / MARKETING は生成画像をHTML内に埋め込み済み
+- HTML単体でそのまま表示可能
